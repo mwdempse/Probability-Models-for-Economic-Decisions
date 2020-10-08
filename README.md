@@ -7,3 +7,4 @@ Work through Probability Models for Economic Decisions by Roger B Myerson and Ed
 
 Convert the Excel spreadsheet code into an R package. 
 
+Raw code files seek to recreate the figures in the book one to one. While clean files recreate the spirit of the figures in a reproducible manner. 
