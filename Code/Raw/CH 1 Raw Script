@@ -1,0 +1,700 @@
+#Probability Models for Economic Decisions
+'Harrison McKenny and Matthew Dempsey'
+
+
+#---------Chapter 1: Simulation and Conditional Probability-----------
+#-----percentile.inc function
+pcntinc <- function(v,x){
+  sorted <- sort(v)
+  item <- x*(length(v)-1)+1
+  p <- sorted[item]
+  return(p)
+  }
+#---1.1 How to Toss Coins in a Spreadsheet
+r <- runif(1)
+HT <- ifelse(r<0.5,"Heads","Tails")
+rand <- data.frame(r,HT)
+
+rand
+
+#same code again
+
+r=runif(1)
+HT <- ifelse(r<0.5,"Heads","Tails")
+rand <- data.frame(r,HT)
+rand
+
+#different results
+
+#---------copying many times to see visually
+r <- runif(20)
+g <- ifelse(r<0.5,"Heads","Tails")
+visual <- data.frame(r,g)
+
+visual
+#in a new tab
+View(visual)
+
+#---------------Tossing an unfair coin
+r <- runif(20)
+d <- 0.25
+g <- ifelse(r<d,"Heads","Tails")
+visual <- data.frame(r,g)
+
+visual
+#in a new tab
+View(visual)
+
+#------1.2 A Simulation Model of 20 Sales Calls
+#changing the ifelse statement to return a 1 to represent a sale or 0 to represent no sale.
+r <- runif(20)
+g <- c()
+c <- 0.5
+g=ifelse(r<c,1,0)
+
+g
+#in a new tab
+View(g)
+
+#How many sales in 20 calls?
+cat("Total Sales in 20 calls =", sum(g))
+
+
+#------Figure 1.4 Assigning a randomized skill level to Salesmen
+#rerunning lines 62 through 69 will yeild different results each time
+r <- runif(20)
+g <- c()
+c <- ifelse(runif(1)<0.5,1/3,2/3)
+sales=ifelse(r<c,1,0) #where 1 represents making a sale and 0 represents not making a sale
+
+sales
+#in a new tab
+View(sales)
+cat("we are modeling as salesmen with a probability of",c,"of making a sale")
+cat("This salesmen made",sum(sales),"sales, out of 20 calls")
+
+#the results of these 20 sales-calls are conditionally independent given the skill
+
+#------------Figure 1.5 Simulation table for modeling 20 sales cells
+  skill <- vector()
+  sum_sales <- vector()
+  ireration <- 1001
+  
+  for (i in 1:ireration) {
+    r <- runif(20) #sales socre 
+    c <- ifelse(runif(1)<0.5,1/3,2/3)#skill of saleman
+    sales <- 0
+    for (j in 1:length(r)) {
+      sales <- ifelse(r[j]<c,1,0) + sales
+    }
+    sum_sales[i] <- sales
+    skill[i] <- ifelse(c==1/3,0,1)
+  }
+
+pcnt_rnk=seq(0,1,0.001)  
+
+pcnt_rnk
+length(pcnt_rnk)
+
+visual <- data.frame(pcnt_rnk,skill,sum_sales)
+visual
+
+View(visual)
+summary(cbind.data.frame(skill,sum_sales))
+
+#--------------------figure 1.6 simulation data and analysis
+#what can we infer about the salesperson's skill if he gets 9 sales in 20 calls?
+is_skill_hi <-c()
+num_sales <- 9
+length(skill)
+
+for (i in 1:length(skill)){
+  if (visual$sum_sales[i]==num_sales & visual$skill[i]==1){
+    is_skill_hi[i] <- 1
+  } else if (visual$sum_sales[i]==num_sales & visual$skill[i]==0){
+    is_skill_hi[i] <- 0
+  }
+  else if(visual$sum_sales[i]!= num_sales) {
+    is_skill_hi[i] <- NA
+  }
+}
+
+is_skill_hi
+
+skill_hi <- sum(visual$sum_sales==num_sales & visual$skill==1) #checking values
+skill_lo <- sum(visual$sum_sales==num_sales & visual$skill==0) #Checking values
+
+visual <- data.frame(pcnt_rnk,skill,sum_sales,is_skill_hi)
+View(visual)
+
+visual$is_skill_hi <- as.character(visual$is_skill_hi)
+visual$is_skill_hi[is.na(visual$is_skill_hi)] <- ".."
+
+Freq_In_SimTable <- sum(visual$is_skill_hi==1) + sum(visual$is_skill_hi==0)
+
+cat("With Sales =",num_sales,"Frequency in Simtable:",sum(visual$is_skill_hi==1),"Skill hi,",Freq_In_SimTable,"Total")
+
+cat("P(Skill hi| Sales=",num_sales,"):", sum(visual$is_skill_hi==1)/Freq_In_SimTable)
+
+#-----------------1.3 Analysis Using Excel's Data-Table Command
+
+##install.packages("frequency")
+library(frequency)
+i34 <- Freq_In_SimTable #i34
+j34 <- sum(visual$is_skill_hi==1) #j34
+k34 <- i34-j34
+l34 <- j34/(j34+k34)
+
+h35_55=seq(0,20,1)
+
+#----------------------------Figure 1.7 Data table of results for different numbers of sales
+is_skill_hi <-c()
+num_sales <- h35_55
+length(skill)
+skill_hi <- c()
+skill_lo <- c()
+total <-  c()
+prob_skill_hi <- c()
+for (h in 1:length(h35_55)){
+  
+  skill_hi[h] <- sum(visual$sum_sales==num_sales[h] & visual$skill==1) #checking values
+  skill_lo[h] <- sum(visual$sum_sales==num_sales[h] & visual$skill==0) #Checking values
+  
+  
+  
+  total[h] <- skill_hi[h] + skill_lo[h]
+  prob_skill_hi[h] <- skill_hi[h]/total[h]
+} #--------------------loop ends here
+total
+prob_skill_hi
+
+visual1_7=data.frame(total,skill_hi,skill_lo,prob_skill_hi)
+
+View(visual1_7)
+
+#------------------Figure 1.8 Frequencies of sales in simulation data (total and by skill level)
+#Wrangling data to create a visualization
+Top <- data.frame(skill_hi)
+Top$Type <- 'High Skill'
+Top
+colnames(Top) <- c("Frequency","Type")
+Bottom <- data.frame(skill_lo)
+Bottom$Type <- 'Low Skill'
+Bottom
+colnames(Bottom) <- c("Frequency","Type")
+Tot <- Top$Frequency +Bottom$Frequency
+Total <- data.frame(Tot)
+Total$Type <- 'Total'
+colnames(Total) <- c("Frequency","Type")
+
+HistData <- rbind(Top,Bottom,Total)
+HistData
+
+#Data is ready
+
+library(tidyverse)
+ggplot(data=HistData)+
+  geom_bar(mapping = aes(x=HistData$Frequency,fill=Type,color=Type),
+           position='dodge')
+
+x1 <- hist(visual1_7$skill_hi,breaks=20)
+x2 <- hist(visual1_7$skill_lo,breaks=20)
+x3 <- hist(visual1_7$total,breaks=20)
+plot(x1,col=alpha('red',0.5))
+lines(x2,col=alpha('blue',0.3))
+lines(x3,col=alpha('green',0.3))
+
+# Dear Lord, this is bunk dempsey fix this
+
+
+#**********************1.4 This section has no coding****************************
+
+#1.5 A continuous Random Skill Variable from a Triangular Distribution
+#install.packages("EnvStats") #package for a triangular random variable
+library(EnvStats)
+#rtri(# of values to return,min,max,mode) #this documentation is different than Zombies function
+
+rtri(100,min=0,max=1,mode=0.5)
+e3 <- 0
+e4 <- 0.5
+e5 <- 1
+r <- runif(20)
+g <- c()
+c <- rtri(1,min=e3,max=e5,mode=e4) #New Salesperson's simulated skill level
+
+sales=ifelse(r<c,1,0) #where 1 represents making a sale and 0 represents not making a sale
+
+sales
+#in a new tab
+View(sales)
+cat("we are modeling as salesmen with a probability of",c,"of making a sale")
+cat("This salesmen made",sum(sales),"sales, out of 20 calls")
+
+c8 <- sum(sales)
+
+#-------------------------We can now create a simulation table like in 1.5
+
+skill <- vector()
+sum_sales <- vector()
+ireration <- 1001
+
+for (i in 1:ireration) {
+  r <- runif(20) #sales score 
+  c <- rtri(1,min=e3,max=e5,mode=e4)#skill of salesman
+  sales <- 0
+  for (j in 1:length(r)) {
+    sales <- ifelse(r[j]<c,1,0) + sales
+  }
+  sum_sales[i] <- sales
+  skill[i] <- c
+}
+
+pcnt_rnk=seq(0,1,0.001)  
+
+pcnt_rnk
+length(pcnt_rnk)
+
+visual1_9 <- data.frame(pcnt_rnk,skill,sum_sales)
+visual
+
+View(visual1_9)
+summary(cbind.data.frame(skill,sum_sales))
+
+pctr <-  function(x,xo) {length(x[x<= xo])/length(x)} #the same as percentrank.inc in excel
+
+b24 <- 0.5 #Compare to skill cutoff:
+b25 <- pctr(visual1_9$skill,b24) #P(Skill<=b24)
+b25 # this tell us that 50% of the simulated skill levels are less than 0.5. We expect this because
+#of the mode setting on the triangle dist function used in the loop
+
+#Rank Skill
+a29 <- 0.9
+a30 <- 0.5
+a31 <- 0.1
+
+b29 <- pcntinc(visual1_9$skill,a29)
+b30 <- pcntinc(visual1_9$skill,a30)
+b31 <- pcntinc(visual1_9$skill,a31)
+
+A <- c(a29,a30,a31)
+B <- c(b29,b30,b31)
+rankskill <- data.frame(A,B)
+rankskill
+
+#making vector =IF(C36=$E$34,B36,"..")
+skill_given_sales_equal_e34 <-c()
+num_sales <- 9
+#for (i in length(visual1_9$skill)){
+# skill_given_sales_equal_e34[i] <- ifelse(visual1_9$sum_sales[i]==9,visual1_9$skill[i],NA)
+#} Junk attempt at the loop
+
+for (i in 1:length(visual1_9$skill)){
+  if (visual1_9$sum_sales[i]==num_sales){
+    skill_given_sales_equal_e34[i] <- visual1_9$skill[i]
+  } else if(visual1_9$sum_sales[i]!= num_sales) {
+    skill_given_sales_equal_e34[i] <- NA
+  }
+}
+
+View(skill_given_sales_equal_e34)
+
+visual1_9 <- cbind(visual1_9,skill_given_sales_equal_e34)
+visual1_9$skill_given_sales_equal_e34 <- as.character(visual1_9$skill_given_sales_equal_e34)
+visual1_9$skill_given_sales_equal_e34[is.na(visual1_9$skill_given_sales_equal_e34)] <- ".."
+
+View(visual1_9) #Got it!!
+
+count(visual1_9,visual1_9$skill_given_sales_equal_e34 != '..') #e36 number of simulations in which 9 sales occured
+
+#creating another skillrank matrix with results from skills_given_sales_equal_e34
+d29 <- a29
+d30 <- a30
+d31 <- a31
+#------------------------***************Think this is good now------------***********************
+e29 <- pcntinc(skill_given_sales_equal_e34[!is.na(skill_given_sales_equal_e34)],a29)# right
+e30 <- pcntinc(skill_given_sales_equal_e34[!is.na(skill_given_sales_equal_e34)],a30)# right
+e31 <- pcntinc(skill_given_sales_equal_e34[!is.na(skill_given_sales_equal_e34)],a31)# right
+
+C <- c(d29,d30,d31)
+D <- c(e29,e30,e31)
+rankskill2 <- data.frame(C,D) 
+rankskill2
+
+summary(skill_given_sales_equal_e34[!is.na(skill_given_sales_equal_e34)]) #maybe this is right actually?
+!is.na(skill_given_sales_equal_e34)
+
+
+#---Page 26-27 ---Changing the number of sales (e34) to some other value
+skill_given_sales_equal_e34_2 <-c()
+num_sales <- 14
+
+
+for (i in 1:length(visual1_9$skill)){
+  if (visual1_9$sum_sales[i]==num_sales){
+    skill_given_sales_equal_e34_2[i] <- visual1_9$skill[i]
+  } else if(visual1_9$sum_sales[i]!= num_sales) {
+    skill_given_sales_equal_e34_2[i] <- NA
+  }
+}
+
+View(skill_given_sales_equal_e34_2)
+visual1_9
+
+visual1_9 <- cbind(visual1_9,skill_given_sales_equal_e34_2)
+#visual1_9$skill_given_sales_equal_e34 <- as.character(visual1_9$skill_given_sales_equal_e34)
+visual1_9$skill_given_sales_equal_e34_2[is.na(as.character(visual1_9$skill_given_sales_equal_e34_2))] <- ".."
+
+View(visual1_9) #Got it!!
+
+count(visual1_9,visual1_9$skill_given_sales_equal_e34 != '..') #e36 number of simulations in which 9 sales occured
+
+d29
+d30
+d31
+
+e29 <- pcntinc(skill_given_sales_equal_e34_2[!is.na(skill_given_sales_equal_e34_2)],d29)
+e30 <- pcntinc(skill_given_sales_equal_e34_2[!is.na(skill_given_sales_equal_e34_2)],d30)# maybe right
+e31 <- pcntinc(skill_given_sales_equal_e34_2[!is.na(skill_given_sales_equal_e34_2)],d31)
+
+C <- c(d29,d30,d31)
+D <- c(e29,e30,e31)
+rankskill2 <- data.frame(C,D) 
+rankskill2
+
+summary(skill_given_sales_equal_e34[!is.na(skill_given_sales_equal_e34)]) #maybe this is right actually?
+
+#-------------------------------1.6 Probability Trees and Bayes Rule
+
+
+#Figure 1.10 I show how to make this in the Figure 1.14 section below
+B3 <- ifelse(runif(1)<0.6,1,0)
+C3 <- ifelse(runif(1)<ifelse(B3==1,0.3,0.1),1,0)
+D3 <- ifelse(runif(1)<ifelse(B3==1,0.3,0.1),1,0)
+
+#Figure 1.11 Probability tree for oil-exploration example
+rm(list=ls())
+f <- 0.6
+# Probability (A | F)
+aGivenf<- 0.3
+
+# Probability (A | ¬F)
+aGivenNotf<-.1
+
+###################### Everything below here will be calculated
+
+# Calculate the rest of the values based upon the 3 variables above
+notaGivenf<-1-aGivenf
+notf<-1-f
+notaGivenNotf<-1-aGivenNotf
+
+#Joint Probabilities of a and B, a and notb, nota and b, nota and notb
+aANDb<-f*aGivenf
+aANDnotb<-f*notaGivenf
+notaANDb <- notf*aGivenNotf
+notaANDnotb <- notf*notaGivenNotf
+
+# Probability of B
+b<- aANDb + notaANDb
+notB <- 1-b
+
+# Bayes theorum - probabiliyt of A | B
+# (a | b) = Prob (a AND b) / prob (b)
+aGivenb <- aANDb / b
+
+# These are the labels of the nodes on the graph
+# To signify "Not A" - we use A' or A prime 
+
+node1<-"P"
+node2<-"F"
+node3<-"-F"
+node4<-"A & F"
+node5<-"-A & F"
+node6<-"A & -F"
+node7<-"-A & -F"
+node8<-"B & FnA"
+node9<-"-B & FnA"
+node10<-"B & Fn-A"
+node11<-"-B & Fn-A"
+node12<-"B & -FnA"
+node13<-"-B & -FnA"
+node14<-"B & -Fn-A"
+node15<-"-B & -Fn-A"
+
+nodeNames<-c(node1,node2,node3,node4, node5,node6, node7,node8,node9,
+             node10,node11,node12,node13,node14,node15)
+
+rEG <- new("graphNEL", nodes=nodeNames, edgemode="directed")
+#Erase any existing plots
+dev.off()
+
+# Draw the "lines" or "branches" of the probability Tree
+rEG <- addEdge(nodeNames[1], nodeNames[2], rEG, 1)
+rEG <- addEdge(nodeNames[1], nodeNames[3], rEG, 1)
+rEG <- addEdge(nodeNames[2], nodeNames[4], rEG, 1)
+rEG <- addEdge(nodeNames[2], nodeNames[5], rEG, 1)
+rEG <- addEdge(nodeNames[3], nodeNames[6], rEG, 1)
+rEG <- addEdge(nodeNames[3], nodeNames[7], rEG, 10)
+rEG <- addEdge(nodeNames[4], nodeNames[8], rEG, 10)
+rEG <- addEdge(nodeNames[4], nodeNames[9], rEG, 10)
+rEG <- addEdge(nodeNames[5], nodeNames[10], rEG, 10)
+rEG <- addEdge(nodeNames[5], nodeNames[11], rEG, 10)
+rEG <- addEdge(nodeNames[6], nodeNames[12], rEG, 10)
+rEG <- addEdge(nodeNames[6], nodeNames[13], rEG, 10)
+rEG <- addEdge(nodeNames[7], nodeNames[14], rEG, 10)
+rEG <- addEdge(nodeNames[7], nodeNames[15], rEG, 10)
+
+
+
+?addEdge
+
+eAttrs <- list()
+
+q<-edgeNames(rEG)
+
+# Add the probability values to the the branch lines
+BgivenAintersectionf <- 0.3
+NotbgivenAintersectionf <- 0.7
+BgivenNotAintersectionf <- 0.3
+NotbgivenNotAintersectionf <- 0.7
+bgivenAintersectionNotf <- 0.1
+NotbgivenaAintersectionNotf <- 0.9
+bgivenNOTAintersectionNotf <- 0.1
+NotbgivenNotAintersectionNotf <- 0.9
+
+
+eAttrs$label <- c(toString(f),toString(notf),
+                  toString(aGivenf), toString(notaGivenf),
+                  toString(aGivenNotf), toString(notaGivenNotf),toString(BgivenAintersectionf)
+                  ,toString(NotbgivenAintersectionf),toString(BgivenNotAintersectionf),toString(NotbgivenNotAintersectionf)
+                  ,toString(bgivenAintersectionNotf),toString(NotbgivenaAintersectionNotf),toString(bgivenNOTAintersectionNotf),
+                  toString(NotbgivenNotAintersectionNotf),toString(bgivenAintersectionNotf))
+names(eAttrs$label) <- c(q[1],q[2], q[3], q[4], q[5], q[6],
+                         q[7],q[8],q[9],q[10],q[11],q[12],q[13],q[14],
+                         q[15])
+edgeAttrs<-eAttrs
+
+# Set the color, etc, of the tree
+attributes<-list(node=list(label="foo", fillcolor="lightgreen", fontsize="15"),
+                 edge=list(color="red"),graph=list(rankdir="LR"))
+
+#Plot the probability tree using Rgraphvis
+plot(rEG, edgeAttrs=eAttrs, attrs=attributes)
+nodes(rEG)
+edges(rEG)
+
+#Add the probability values to the leaves of A&B, A&B', A'&B, A'&B'
+BgivenFintersectA <- (0.6*0.3*0.3)
+NotBgivenFintersectA <- (0.6*0.3*0.7)
+BgivenFintersectNotA <- (0.6*0.7*0.3)
+NotBgivenFintersectNotA <- (0.6*0.7*0.7)
+BgivenNotFintersectA <- (0.4*0.1*0.1)
+NotBgivenNotFintersectA <- (0.4*0.1*0.9)
+BgivenNotFintersectNotA <- (0.4*0.9*0.1)
+NotBgivenNotFintersectNotA <- (0.4*0.9*0.9)
+
+
+text(80,120,paste("P(B & FnA):",BgivenFintersectA),cex=.5, col="darkgreen")
+text(80,80,paste("P(-B & FnA):",NotBgivenFintersectA),cex=.5, col="darkgreen")
+text(80,40,paste("P(B & Fn-A):",BgivenFintersectNotA),cex=.5, col="darkgreen")
+text(80,5,paste("P(-B & Fn-A):",NotBgivenFintersectNotA),cex=.5, col="darkgreen")
+text(200,120,paste("P(-B & FnA):",BgivenNotFintersectA),cex=.5, col="darkgreen")
+text(200,80,paste("P(-B & FnA):",NotBgivenNotFintersectA),cex=.5, col="darkgreen")
+text(200,40,paste("P(-B & FnA):",BgivenNotFintersectNotA),cex=.5, col="darkgreen")
+text(200,5,paste("P(-B & FnA):",NotBgivenNotFintersectNotA),cex=.5, col="darkgreen")
+
+Matrix
+#Figure 1.12 Probability tree for oil-exploration example
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
+#BiocManager::install("Rgraphviz")
+#^Code needed to install Rgraphviz
+
+
+library(Rgraphviz)
+
+#Prob of F
+a <- 0.22
+# Probability (A | F)
+bGivena<- 0.2636
+
+# Probability (A | ¬F)
+bGivenNota<-.2077
+
+###################### Everything below here will be calculated
+
+# Calculate the rest of the values based upon the 3 variables above
+notbGivena<-1-bGivena
+notA<-1-a
+notbGivenNota<-1-bGivenNota
+
+#Joint Probabilities of a and B, a and notb, nota and b, nota and notb
+aANDb<-a*bGivena
+aANDnotb<-a*notbGivena 
+notaANDb <- notA*bGivenNota
+notaANDnotb <- notA*notbGivenNota
+
+# Probability of B
+b<- aANDb + notaANDb
+notB <- 1-b
+
+# Bayes theorum - probabiliyt of A | B
+# (a | b) = Prob (a AND b) / prob (b)
+aGivenb <- aANDb / b
+
+# These are the labels of the nodes on the graph
+# To signify "Not A" - we use A' or A prime 
+
+node1<-"P"
+node2<-"A"
+node3<-"-A"
+node4<-"B & A"
+node5<-"-B & A"
+node6<-"B & -A"
+node7<-"-B & -A"
+nodeNames<-c(node1,node2,node3,node4, node5,node6, node7)
+
+rEG <- new("graphNEL", nodes=nodeNames, edgemode="directed")
+#Erase any existing plots
+dev.off()
+
+# Draw the "lines" or "branches" of the probability Tree
+rEG <- addEdge(nodeNames[1], nodeNames[2], rEG, 1)
+rEG <- addEdge(nodeNames[1], nodeNames[3], rEG, 1)
+rEG <- addEdge(nodeNames[2], nodeNames[4], rEG, 1)
+rEG <- addEdge(nodeNames[2], nodeNames[5], rEG, 1)
+rEG <- addEdge(nodeNames[3], nodeNames[6], rEG, 1)
+rEG <- addEdge(nodeNames[3], nodeNames[7], rEG, 10)
+
+eAttrs <- list()
+
+q<-edgeNames(rEG)
+
+# Add the probability values to the the branch lines
+
+eAttrs$label <- c(toString(a),toString(notA),
+                  toString(bGivena), toString(notbGivena),
+                  toString(bGivenNota), toString(notbGivenNota))
+names(eAttrs$label) <- c(q[1],q[2], q[3], q[4], q[5], q[6])
+edgeAttrs<-eAttrs
+
+# Set the color, etc, of the tree
+attributes<-list(node=list(label="foo", fillcolor="lightgreen", fontsize="15"),
+                 edge=list(color="red"),graph=list(rankdir="LR"))
+
+#Plot the probability tree using Rgraphvis
+plot(rEG, edgeAttrs=eAttrs, attrs=attributes)
+nodes(rEG)
+edges(rEG)
+
+#Add the probability values to the leaves of A&B, A&B', A'&B, A'&B'
+text(450,410,aANDb, cex=.8)
+
+text(450,275,aANDnotb,cex=.8)
+
+text(450,140,notaANDb,cex=.8)
+
+text(450,5,notaANDnotb,cex=.8)
+
+
+#-------------------------------Figure 1.13 Binomial Probability computaions for Salesperson example
+pbinom(seq(0,20,1),20,2/3)#not sure which one to use? i think dbinom ??????
+##Probabilities P(k sales|Skill=Hi)  *************************************************************
+P_Skill <- 0.5 #A3
+b3_23 <- seq(0,20,1) #B
+c3_23 <- dbinom(seq(0,20,1),20,2/3) #C
+d3_23 <- P_Skill*c3_23
+f3_23 <- c()
+
+for (i in 1:length(d3_23)){
+  f3_23[i] <- d3_23[i]/(d3_23[i]+d27_47[i])
+}
+
+View(f3_23)
+
+visual1_13 <- data.frame(b3_23,c3_23,d3_23,f3_23)
+visual1_13
+
+#Probabilities P(k sales | Skill =Low)
+b27_47 <- seq(0,20,1) #B
+c27_47 <- dbinom(seq(0,20,1),20,1/3) #C
+d27_47 <- P_Skill*c27_47
+
+visual1_13_2 <- data.frame(b27_47,c27_47,d27_47)
+visual1_13_2
+
+
+#-----------------Figure 1.14 Computing frequencies of different outcomes in oil-exploration example
+B3 <- ifelse(runif(1)<0.6,1,0)
+C3 <- ifelse(runif(1)<ifelse(B3==1,0.3,0.1),1,0)
+D3 <- ifelse(runif(1)<ifelse(B3==1,0.3,0.1),1,0)
+
+b4_1003 <- c()
+c4_1003 <- c()
+d4_1003 <- c()
+
+for (i in 1:1000){
+  b4_1003[i] <- ifelse(runif(1)<0.6,1,0)
+  c4_1003[i] <- ifelse(runif(1)<ifelse(B3==1,0.3,0.1),1,0)
+  d4_1003[i] <- ifelse(runif(1)<ifelse(B3==1,0.3,0.1),1,0)
+}
+SimTable <- seq(0,1,.001001)
+
+Simulation_Model <- data.frame(SimTable,b4_1003,c4_1003,d4_1003)
+Simulation_Model
+
+pattern <- matrix(c(1,1,1,
+                    1,1,0,
+                    1,0,1,
+                    1,0,0,
+                    0,1,1,
+                    0,1,0,
+                    0,0,1,
+                    0,0,0),8,3,byrow=TRUE)
+
+pattern[1,3]
+pattern
+
+f <- c()
+# doing this once as a simple loop so i can make the matrix on figure 1.14
+for (i in 1:1000){
+  if (b4_1003[i]==pattern[1,1] & c4_1003[i]==pattern[1,2] & d4_1003[i]==pattern[1,3]){
+    f[i] <- 1
+  } else{
+    f[i] <- 0
+  }
+
+}
+
+visual1_14 <- data.frame(SimTable,b4_1003,c4_1003,d4_1003,f) #data frame for figure 1.14 
+
+visual1_14
+
+sum(f)
+
+sumf <- c()
+for (j in 1:length(pattern[,1])){
+  
+
+for (i in 1:1000){
+  if (b4_1003[i]==pattern[j,1] & c4_1003[i]==pattern[j,2] & d4_1003[i]==pattern[j,3]){
+    f[i] <- 1
+  } else{
+    f[i] <- 0
+  }
+  
+}
+  sumf[j] <- sum(f)
+  
+}
+sumf
+
+rowi <- ifelse(pattern[,1]==1,"Yes","No")
+rowj <- ifelse(pattern[,2]==1,"Yes","No")
+rowk <- ifelse(pattern[,3]==1,"Yes","No")
+
+Matrix <- data.frame(rowi,rowj,rowk,sumf)
+Matrix
+colnames(Matrix) <- c("FavStr?","Oil@A?","Oil@B?","Frequency")
+
+
+Matrix
