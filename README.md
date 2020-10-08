@@ -1,5 +1,5 @@
 # Probability-Models-for-Economic-Decisions
-Colaberator: Harrison McKenny
+Collaberator: Harrison McKenny
 
 
 
