@@ -2,9 +2,12 @@ rm(list = ls())
 
 "Authors: Matthew Dempsey & Harrison McKenny"
 
-#install.packages(c("tidyverse","EnvStats"))
+#install.packages(c("tidyverse","EnvStats","data.tree","stringr"))
 library(tidyverse, quietly = T)
 library(EnvStats, quietly = T)
+library(data.tree, quietly = T)
+library(stringr, quietly = T)
+
 
 # percentile.inc function found in Excel
 pcntinc <- function(v,x){
@@ -112,6 +115,7 @@ iter_sales <- function(n=20, hi_skill_prob=0.5, hi_sale_prob = 2/3, iterations=1
       prob_table[k,3] <- freq_hi
       prob_table[k,4] <- freq_total - freq_hi
       prob_table[k,5] <- freq_hi/freq_total
+      
       
     }
     
@@ -222,3 +226,257 @@ tri_iter_sales <- function(n=20, peak = 0.5, iterations=1000, v = TRUE){
 
 tri_iter_sales()
 
+
+#Fig 1.11
+
+data_for_tree <- function(pathString, prob, start_node = "Oil State" ){
+  
+  #######################
+  # pathString: vector of strings in path order separated by '/'
+  # prob: vector of probabilities which corresponds to the order of the pathString
+  # start_node: label of the starting node
+  # output: dataset for the plot_tree, or given_prob functions
+  #######################  
+  
+  prob_data <- cbind.data.frame(pathString,prob) %>%
+    mutate(tree_level = str_count(string = pathString,
+                                  pattern = "/") + 1,
+           tree_group = str_replace(string = pathString, pattern = "/.*", replacement = ""),
+           node_type = "decision_node")
+  
+  max_tree_level <- max(prob_data$tree_level, na.rm = T) 
+  
+  # get distinct probabilities to find parent node probability
+  parent_lookup <- prob_data %>% distinct(pathString, prob) 
+  
+  # Loop through all tree layers to get all immediate parent probabilities (to calculate cumulative prob)
+  for (i in 1:(max_tree_level -  1)) { 
+    
+    names(parent_lookup)[1] <-paste0("parent",i)
+    names(parent_lookup)[2] <-paste0("parent_prob",i)
+    
+    for (j in 1:i) {
+      
+      if (j == 1)  prob_data[[paste0("parent",i)]] <- sub("/[^/]+$", "", prob_data$pathString)
+      else if (j  > 1) prob_data[[paste0("parent",i)]] <- sub("/[^/]+$", "", prob_data[[paste0("parent",i)]])
+    }
+    
+    prob_data <- prob_data %>% left_join(parent_lookup, by = paste0("parent",i))
+    
+  }
+  
+  # calculate cumulative probability
+  prob_data$overall_prob <- round(apply(prob_data %>% select(contains("prob")), 1, prod, na.rm = T),4)  
+  
+  # create new rows that will display terminal/final step calculations on the tree
+  terminal_data <- prob_data %>%  filter(tree_level == max_tree_level) %>%
+    mutate(node_type = 'terminal',
+           pathString = paste0(pathString, "/overall"),
+           prob = NA,
+           tree_level = max_tree_level + 1)
+  
+  # bind everything together 
+  prob_data = bind_rows(prob_data, terminal_data) %>%  
+    mutate(pathString = paste0(start_node,"/",pathString),
+           overall_prob = ifelse(node_type == 'terminal', overall_prob, NA),
+           prob_rank = rank(-overall_prob, ties.method = "min", na.last = "keep"))
+  
+  # add row to serve as the start node label
+  prob_data = bind_rows(prob_data, data.frame(pathString = start_node, node_type = 'start', tree_level = 0)) %>% 
+    select(-contains("parent"))
+  return(prob_data)
+  
+}
+
+
+plot_tree <- function(df, direction = "LR") {
+  
+  #######################
+  # df: dataframe from data_for_tree function
+  # direction: direction tree grows
+  # output: probability tree
+  #######################  
+  
+  # convert data to nodes 
+  tree_plot <- as.Node(df) 
+  
+  EdgeLabel <- function(node) switch(node$node_type, node$prob)
+  
+  NodeShape <- function(node) switch(node$node_type, start = "box", node_decision = "circle", terminal = "none")
+  
+  NodeLabel <- function(node) switch(node$node_type, terminal = paste0("Prob: ", node$overall_prob),node$node_name)
+  
+  SetEdgeStyle(tree_plot, fontname = 'helvetica', label = EdgeLabel)
+  
+  SetNodeStyle(tree_plot, fontname = 'helvetica', label = NodeLabel, shape = NodeShape)
+  
+  SetGraphStyle(tree_plot, rankdir = direction) 
+  
+  plot(tree_plot)
+  
+}
+
+pathString <- c('Oil','Oil/A','Oil/A/B','Oil/A/noB',
+                'Oil/noA','Oil/noA/B','Oil/noA/noB',
+                'noOil','noOil/A','noOil/A/B','noOil/A/noB',
+                'noOil/noA','noOil/noA/B','noOil/noA/noB')
+
+prob <- c(0.6,0.3,0.3,0.7,
+          0.7,0.3,0.7,
+          0.4,0.1,0.1,0.9,
+          0.9,0.1,0.9)
+
+oil_tree_data <- data_for_tree(pathString = pathString, prob = prob)
+plot_tree(oil_tree_data)
+
+given_prob <- function(df) {
+  
+  #######################
+  # df: dataframe from data_for_tree function
+  # output: dataframe to be used by plot_tree function
+  #######################  
+  
+  df2 <- df %>% 
+    filter(node_type == 'terminal') %>% 
+    select(pathString,overall_prob)
+  df3<- df2 %>%
+    mutate(pathString = str_remove(df2$pathString,'Oil State/Oil|Oil State/noOil|Oil State'))
+  
+  # probability of there being oil in A
+  prob_A <- as.numeric(df3 %>% 
+                         filter(pathString %in% c(str_subset(df3$pathString,"/A"))) %>%
+                         summarise(sum = sum(overall_prob)))
+  
+  # probability of oil in B and A
+  prob_A_and_B <- as.numeric(df3 %>% 
+                               filter(pathString %in% c(str_subset(df3$pathString,paste0("/A","/B")))) %>% 
+                               summarise(sum = sum(overall_prob)) %>%
+                               round(4))
+  
+  # probability of oil in B given oil in A
+  prob_B_given_A <- round(prob_A_and_B/prob_A,4)
+  
+  # probability of no oil in B given oil in A
+  prob_not_B_given_A <- 1-prob_B_given_A
+  
+  
+  # probability of there not being oil in A                  
+  prob_not_A <- 1-prob_A
+  
+  # probability of there being oil in B and no oil in A
+  prob_B_and_not_A <- as.numeric(df3 %>% 
+                                   filter(pathString %in% c(str_subset(df3$pathString,paste0("/noA","/B")))) %>% 
+                                   summarise(sum = sum(overall_prob)))
+  
+  # probability of there being oil in B given no oil in A
+  prob_B_given_not_A <- round(prob_B_and_not_A/prob_not_A,4)
+  
+  # Probability of there being no oil in B given no oil in A
+  prob_not_B_given_not_A <- 1 - prob_B_given_not_A 
+  
+  
+  given_pathString <<- c('A','A/B','A/noB',
+                         'noA','noA/B','noA/noB')
+  given_prob <<- as.numeric(lapply(c(prob_A,prob_B_given_A,prob_not_B_given_A,
+                                     prob_not_A,prob_B_given_not_A,prob_not_B_given_not_A),round,4))
+  
+  return(cbind(given_pathString,given_prob))
+}
+
+given_prob(oil_tree_data)
+given_tree_data <- data_for_tree(pathString = given_pathString, prob = given_prob, start_node = 'X')
+plot_tree(given_tree_data)
+
+
+iter_sales_binom <- function(n=20, pskill=0.5,psale=2/3, v = TRUE) {
+  
+  #######################
+  # Note: uses a binomial distribution instead of relying on simulating the number of sales
+  # n: number of sales
+  # probskill: probability of HIGH skill 
+  # psale: probability of making sale based on High skill 
+  # v: view output after running
+  # output: list of dataframes of probability of sales given skill level and probability of skill level given number of sales
+  #######################
+  
+  num_sales = seq(0,n,1)
+  
+  # High skill
+  p_sale_given_hi_skill = dbinom(num_sales,n,psale)
+  product_hi = pskill*p_sale_given_hi_skill
+  
+  # Low skill
+  p_sale_given_low_skill = dbinom(num_sales,n,1-psale)
+  product_low = (1-pskill)*p_sale_given_low_skill
+  
+  p_hi_skill_given_num_sales=c()
+  p_low_skill_given_num_sales=c()
+  
+  # probability of skill given number of sales
+  for (i in 1:(n+1)) {
+    p_hi_skill_given_num_sales[i] = product_hi[i]/(product_hi[i] + product_low[i])
+    p_low_skill_given_num_sales[i] = product_hi[i]/(product_hi[i] + product_low[i])
+  }
+  
+  high_skill = round(cbind.data.frame(num_sales,p_sale_given_hi_skill,product_hi,p_hi_skill_given_num_sales),4)
+  low_skill = round(cbind.data.frame(num_sales,p_sale_given_low_skill,product_low,p_low_skill_given_num_sales),4)
+  
+  result = list(`high skill`=high_skill,`low skill`=low_skill)
+  
+  # view data
+  if (v == TRUE) {View(result[['high skill']]); View(result[['low skill']])}
+  
+  return(result)
+  
+  
+}
+
+iter_sales_binom()
+
+oil_sim <- function(n = 1000, poil = 0.6, pA = 0.3, pB = 0.3, pnA = 0.1, pnB = 0.1) {
+  
+  #######################
+  # n: number of simulations
+  # poil: probability of oil rich world state 
+  # pA: probability of oil in A given oil rich world state 
+  # pB: probability of oil in B given oil rich world state 
+  # pnA: probability of oil in A given oil poor world state 
+  # pnB: probability of oil in A given oil poor world state 
+  # output: list of dataframes of probability of sales given skill level and probability of skill level given number of sales
+  #######################
+  
+  
+  oil <- ifelse(runif(n) < poil,1,0)
+  A <- ifelse(runif(n) < ifelse(oil==1,pA,pnA),1,0)
+  B <- ifelse(runif(n) < ifelse(oil==1,pB,pnB),1,0)
+  
+  Simulation_Model <- data.frame(oil,A,B)
+  
+  # unique patterns found in the simulation
+  Pattern_Matrix <- unique(Simulation_Model)
+  
+  
+  Frequency <- Simulation_Model %>%
+    mutate(pattern = paste0(oil,A,B)) %>%
+    group_by(pattern) %>%
+    summarize(Frequency= n())# %>%
+  # select(Frequency)
+  
+  Frequency_Matrix <- Pattern_Matrix %>% 
+    mutate(pattern = paste0(Pattern_Matrix[,1],Pattern_Matrix[,2],Pattern_Matrix[,3]),
+           oil = ifelse(oil == 1,"Yes","No"),
+           A = ifelse(A == 1,"Yes","No"),
+           B = ifelse(B == 1,"Yes","No")) %>% 
+    inner_join(Frequency) %>%
+    select(-pattern) %>% 
+    arrange(desc(oil),desc(A), desc(B))
+  
+  colnames(Frequency_Matrix) <- c("FavStr?","Oil@A?","Oil@B?","Frequency")
+  
+  results <- list(Simulation_Model, Pattern_Matrix, Frequency_Matrix)
+  
+  return(results)
+  
+}
+
+oil_sim()
