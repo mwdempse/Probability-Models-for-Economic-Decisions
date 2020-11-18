@@ -9,8 +9,8 @@ UTIL <- function(x,r,s){
   #######################
   # x: any amount of monetary income
   # r: risk tolerance constant
-  # s:
-  # output: expected utility or money amount given a positive nonzero risk tolerance
+  # s: risk tolerance slope
+  # output: expected utility or money amount given a risk tolerance
   #######################
   
   if(missing(s) & r>0){
@@ -90,9 +90,10 @@ UINV <- function(u,r,s){
   #######################
   # u: any amount of monetary income
   # r: risk tolerance constant
-  # s:
-  # output: expected utility or money amount given a positive nonzero risk tolerance
+  # s: risk tolerance slope
+  # output: expected money which has an equivalent value to the provided utility given a risk tolerance
   #######################
+  
   if(missing(s) & r > 0 ){
     ans <-  -r*log(-u)
     return(ans)
@@ -118,6 +119,7 @@ UINV <- function(u,r,s){
 
 # Certainty Equivalent if utility is endogenous
 CEPR <- function(prize,proby,r,s){
+  
   Util_Prize_Rt <- util(prize,r,s)
   EU <- crossprod(Util_Prize_Rt,proby)
   CE <- uinv(EU,r,s)
@@ -131,8 +133,6 @@ CE <- function(EMV,R,s){
   equiv<- uinv(avgr,R,s)
   return(equiv)
 }
-
-
 
 
 # Other commonly used functions
