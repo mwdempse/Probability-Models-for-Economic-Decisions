@@ -122,7 +122,7 @@ CEPR <- function(prize,proby,r,s){
   
   Util_Prize_Rt <- UTIL(prize,r,s)
   EU <- crossprod(Util_Prize_Rt,proby)
-  CE <- uinv(EU,r,s)
+  CE <- UINV(EU,r,s)
   return(CE)
 }
 
@@ -130,7 +130,7 @@ CEPR <- function(prize,proby,r,s){
 CE <- function(EMV,R,s){
   b15 <- UTIL(EMV,R,s)
   avgr <- mean(b15)
-  equiv<- uinv(avgr,R,s)
+  equiv<- UINV(avgr,R,s)
   return(equiv)
 }
 
@@ -165,7 +165,7 @@ DISCRINV <- function(x,values,prob){
   
   if(length(values) <3 ){
     ifelse(x<0.5,return(values[1]),return(values[2]))
-    }
+  }
   
   precumsum <- c(pcumsum(prob),1)
   
@@ -174,8 +174,8 @@ DISCRINV <- function(x,values,prob){
       simulatedvalue <- K[i]
     }
   }
-    
-    return(simulatedvalue)
+  
+  return(simulatedvalue)
   
 }
 
