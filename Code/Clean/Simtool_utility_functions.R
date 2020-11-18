@@ -135,7 +135,7 @@ CE <- function(EMV,R,s){
 }
 
 
-# Other commonly used functions
+# Other commonly used functions.
 
 STDEVPR <- function(x,prob){
   #######################
