@@ -120,7 +120,7 @@ UINV <- function(u,r,s){
 # Certainty Equivalent if utility is endogenous
 CEPR <- function(prize,proby,r,s){
   
-  Util_Prize_Rt <- util(prize,r,s)
+  Util_Prize_Rt <- UTIL(prize,r,s)
   EU <- crossprod(Util_Prize_Rt,proby)
   CE <- uinv(EU,r,s)
   return(CE)
@@ -128,7 +128,7 @@ CEPR <- function(prize,proby,r,s){
 
 # Certainty Equivalent if utility is endogenous
 CE <- function(EMV,R,s){
-  b15 <- util(EMV,R,s)
+  b15 <- UTIL(EMV,R,s)
   avgr <- mean(b15)
   equiv<- uinv(avgr,R,s)
   return(equiv)
