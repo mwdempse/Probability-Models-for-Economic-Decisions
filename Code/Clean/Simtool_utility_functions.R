@@ -182,8 +182,8 @@ DISCRINV <- function(x,values,prob){
 # Standard Normal distribution with mean 0 and Standard Deviation 1
 NORM.S.DIST <- function(p,cp = T){
   #######################
-  # p: randomly generated value between 0 and 1
-  # cp: Boolean 
+  # p: value to evaluate
+  # cp: TRUE: Densitiy; FALSE: Cumulative Probability   
   # output: returns standard deviation of profit
   #######################
   if(!is.logical(cp)){
