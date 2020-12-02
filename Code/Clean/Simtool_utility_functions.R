@@ -121,7 +121,7 @@ UINV <- function(u,r,s){
 CEPR <- function(prize,proby,r,s){
   
   Util_Prize_Rt <- UTIL(prize,r,s)
-  EU <- crossprod(Util_Prize_Rt,proby)
+  EU <- as.vector(crossprod(Util_Prize_Rt,proby))
   CE <- UINV(EU,r,s)
   return(CE)
 }
@@ -135,7 +135,7 @@ CE <- function(EMV,R,s){
 }
 
 
-# Other commonly used functions.
+# Other commonly used functions
 
 STDEVPR <- function(x,prob){
   #######################
@@ -144,9 +144,9 @@ STDEVPR <- function(x,prob){
   # output: returns standard deviation of profit
   #######################
   
-  meank<- crossprod(x,prob)
+  meank<- as.vector(crossprod(x,prob))
   d <- (x-c(meank))^2
-  stdevk <- (crossprod(d,prob)^0.5)
+  stdevk <- as.vector(crossprod(d,prob)^0.5)
   
   return(stdevk)
 }
@@ -177,5 +177,24 @@ DISCRINV <- function(x,values,prob){
   
   return(simulatedvalue)
   
+}
+
+# Standard Normal distribution with mean 0 and Standard Deviation 1
+NORM.S.DIST <- function(p,cp = T){
+  #######################
+  # p: randomly generated value between 0 and 1
+  # cp: Boolean 
+  # output: returns standard deviation of profit
+  #######################
+  if(!is.logical(cp)){
+    stop('cp must be boolean value')
+  }
+  if(cp){
+    ans <- dnorm(p)
+    return(ans)
+  }else{
+    ans <- pnorm(p)
+    return(ans)
+  }
 }
 
