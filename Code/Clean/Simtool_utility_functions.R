@@ -198,3 +198,50 @@ NORM.S.DIST <- function(p,cp = T){
   }
 }
 
+
+
+# 
+GENLINV <- function(prob1,quart1,quart2,quart3,lowest=NULL,highest=NULL){
+  
+  prob2 = ifelse(prob1>0.999999,0.999999,
+                 ifelse(prob1<0.000001,0.000001,prob1))
+  
+  norml = qnorm(prob2)/0.67449
+  
+  b = (quart3 - quart2)/(quart2-quart1)
+  
+  if(quart1>quart3){
+    stop("Number Error quart1 > quart3")
+  }
+  if(b==1){
+    GenAns = (quart3-quart2)*norml+quart2
+  }
+  else if(b>0){
+    GenAns = (quart3-quart2)*(b^norml-1)/(b-1)+quart2
+  }
+  else{
+    stop("Number Error")
+  }
+  
+  if(!is.null(lowest)){
+    if(quart1<lowest){
+      stop("Number Error quart1 < lowest")
+    }
+    else if(GenAns < lowest){
+      GenAns = lowest
+    }
+  }
+  if(!is.null(highest)){
+    if(quart3>highest){
+      stop("Number Error quart3 > highest")
+    }
+    else if(GenAns > highest){
+      GenAns = highest
+    }
+  }
+  return(GenAns)
+}
+
+
+
+
