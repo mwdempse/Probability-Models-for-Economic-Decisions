@@ -210,9 +210,10 @@ GENLINV <- function(prob1,quart1,quart2,quart3,lowest=NULL,highest=NULL){
   
   b = (quart3 - quart2)/(quart2-quart1)
   
-  if(quart1>quart3){
-    stop("Number Error quart1 > quart3")
+  if(quart1>quart3 | quart1>quart2){
+    stop("Number Error quart1 > quart2|quart3")
   }
+  
   if(b==1){
     GenAns = (quart3-quart2)*norml+quart2
   }
@@ -222,18 +223,17 @@ GENLINV <- function(prob1,quart1,quart2,quart3,lowest=NULL,highest=NULL){
   else{
     stop("Number Error")
   }
-  
   if(!is.null(lowest)){
-    if(quart1<lowest){
-      stop("Number Error quart1 < lowest")
+    if(quart1<lowest|quart2<lowest|quart3<lowest){
+      stop("Number Error quart < lowest")
     }
     else if(GenAns < lowest){
       GenAns = lowest
     }
   }
   if(!is.null(highest)){
-    if(quart3>highest){
-      stop("Number Error quart3 > highest")
+    if(quart3>highest | quart1>highest | quart2>highest){
+      stop("Number Error quart > highest ")
     }
     else if(GenAns > highest){
       GenAns = highest
@@ -241,7 +241,3 @@ GENLINV <- function(prob1,quart1,quart2,quart3,lowest=NULL,highest=NULL){
   }
   return(GenAns)
 }
-
-
-
-
