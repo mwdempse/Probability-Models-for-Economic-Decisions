@@ -2,8 +2,8 @@ rm(list = ls())
 
 "Authors: Matthew Dempsey & Harrison McKenny"
 
+# Packages
 library(tidyverse)
-library(scatterplot3d)
 
 # Load in Simtool specific functions from GITHUB
 source('https://raw.githubusercontent.com/mwdempse/Probability-Models-for-Economic-Decisions/main/Code/Clean/Simtool_utility_functions.R')
@@ -18,7 +18,7 @@ names(profit_mat) <- c('K','P(K=k)')
 profit <- unname(unlist(profit_mat %>% transmute(Profit = totmkt/(1+K) - fc)))
 
 
-# Fig 3.1
+# Fig 3.1 Utility function with constant risk tolerance for Superconductor example from CH2
 
 plot.cr <- function(H,L,CE) {
   #######################
@@ -82,7 +82,7 @@ plot.cr <- function(H,L,CE) {
 
 plot.cr(20,-10,2)
 
-# Fig 3.2
+# Fig 3.2 Analysis of Superconductor example from CH2 with constant risk tolerance
 
 utility_sim <- function(H,L,CE, profit, prob, n = 400) {
   #######################
@@ -129,7 +129,7 @@ utility_sim <- function(H,L,CE, profit, prob, n = 400) {
 
 utility_sim(20,-10,2,profit = profit, prob = prob)
 
-# Fig 3.3
+# Fig 3.3 Estimating local risk tolerances with constant or linear risk tolerance
 
 RT_local <- function(X,R,s,d = 10) {
   #######################
@@ -167,9 +167,7 @@ RT_local <- function(X,R,s,d = 10) {
 
 RT_local(X = c(1000,5000,10000,20000,50000), R = 10000, s = .02, d = 10)
 
-
-
-# Fig 3.4
+# Fig 3.4 Analysis of utility theory between two lotteries
 
 lottery_utilities <- function(profit, prob, 
                    lot1_prob = c(.5,.5),
@@ -204,21 +202,11 @@ lottery_utilities <- function(profit, prob,
   
   dat = combo %>% select(-c(prob_low,prob_high,Utility2)) %>% rename(Utility = Utility1) %>% mutate(Lottery = 'First Lottery')
   dat2 = combo %>% select(-c(prob_low,prob_high,Utility1)) %>% rename(Utility = Utility2) %>% mutate(Lottery = 'Second Lottery')
-  plotdat = rbind.data.frame(dat,dat2)
+  plotdat = rbind.data.frame(dat,dat2) %>%
+    mutate(Lot = paste(Low,High,sep = ','),
+           row = ifelse(row_number() > length(Lot)/2,row_number()-length(Lot)/2,row_number()))
   colors <- ifelse(plotdat$Lottery == 'First Lottery',"#56B4E9","#E69F00")
-  
-  if (D3) {
-    
-    scatterplot3d(x = plotdat$Low,y = plotdat$High, z = plotdat$Utility,
-                  pch = 16, color = colors, box = T)
-    legend("right", legend = levels(as.factor(plotdat$Lottery) ),
-           col =  c("#56B4E9","#E69F00"), pch = 16)
-    
-  }
-  
-  plotdat <- plotdat %>% mutate(Lot = paste(Low,High,sep = ','),
-                                row = ifelse(row_number() > length(Lot)/2,row_number()-length(Lot)/2,row_number()))
-  
+
   g = ggplot(plotdat, aes(x = reorder(Lot,row), y = Utility, fill = Lottery)) +
     geom_bar(stat = 'identity', position = 'dodge') +
     scale_fill_manual(values = c('gold2','blue3')) + 
@@ -236,7 +224,7 @@ lottery_utilities(profit = c(0,920,1000,2000,3300,5000),
        prob =  c(0,0.25,0.27,0.5,0.75,1))
 
 
-# Fig 3.5 					
+# Fig 3.5 Derivation of exponential utility from constant risk tolerance					
 
 utility_con_RT <- function(prob = 0.51 ,U0 = 0, U1 = 1, kmax = 20) {
   #######################
