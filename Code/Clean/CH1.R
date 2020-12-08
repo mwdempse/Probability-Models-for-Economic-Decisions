@@ -2,25 +2,18 @@ rm(list = ls())
 
 "Authors: Matthew Dempsey & Harrison McKenny"
 
-#install.packages(c("tidyverse","EnvStats","data.tree","stringr"))
+# Packages
+# install.packages(c("tidyverse","EnvStats","data.tree","stringr"))
 library(tidyverse, quietly = T)
 library(EnvStats, quietly = T)
 library(data.tree, quietly = T)
 library(stringr, quietly = T)
 
+# Load in Simtool specific functions from GITHUB
+source('https://raw.githubusercontent.com/mwdempse/Probability-Models-for-Economic-Decisions/main/Code/Clean/Simtool_utility_functions.R')
 
-# percentile.inc function found in Excel
-pcntinc <- function(v,x){
-  sorted <- sort(v)
-  item <- x*(length(v)-1)+1
-  p <- sorted[item]
-  return(p)
-}
+# Fig 1.1/1.2 Simulation of coin toss with adjustable probability
 
-# percentrank.inc found in Excel
-percentrank.inc <-  function(x,xo) {length(x[x<= xo])/length(x)} 
-
-#simulation coin toss of fair and unfair coins
 coin_toss <- function(n=1,prob=0.5){
   #######################
   # n: number of coin flips
@@ -35,7 +28,8 @@ coin_toss <- function(n=1,prob=0.5){
 
 coin_toss(10,.25)
 
-#simulate sales with variable probability of success for sale 
+# Fig 1.3 Simple model of independent sales calls with variable probability of success for sale 
+
 sales <- function(n=20, sale_prob=0.5){
   #######################
   # n: number of calls per week
@@ -51,7 +45,8 @@ sales <- function(n=20, sale_prob=0.5){
 
 sales()
 
-# Iterative sales with variable skill level and probability of success for sale
+# Fig 1.6 & 1.7 Iterative sales with variable skill level and probability of success for sale
+
 iter_sales <- function(n=20, hi_skill_prob=0.5, hi_sale_prob = 2/3, iterations=1000, v = TRUE, prob=TRUE){
   
   #######################
@@ -149,7 +144,7 @@ iter_sales <- function(n=20, hi_skill_prob=0.5, hi_sale_prob = 2/3, iterations=1
 iter_sales(n=20,hi_skill_prob=0.5,hi_sale_prob = 2/3,iterations=1000)
 
 
-# plot results of iter_sales
+# Fig 1.8 Frequency plot of sales from simulation by skill level
 
 high <- iter_sales_results %>% filter(high_skill ==1) 
 high$skill <- 'High Skill'
@@ -168,7 +163,9 @@ iter_sales_long <- rbind.data.frame(high,low,Total)
 ggplot(iter_sales_long,aes(x= sum_sales, fill=skill)) + 
   geom_bar(position='dodge')
 
-# Iterative sales using a triangular distribution
+
+# Fig 1.9 Iterative sales with variable skill level and probability of success for sale using a triangular distribution
+ 
 tri_iter_sales <- function(n=20, peak = 0.5, iterations=1000, v = TRUE){
   
   #######################
@@ -203,16 +200,15 @@ tri_iter_sales <- function(n=20, peak = 0.5, iterations=1000, v = TRUE){
     skill[i] <- c
   }
   
-  
   # Calculate rank of skills
   
   z <- cbind.data.frame(sum_sales, skill)
   
-  tri_iter_sales_raw_results <<- z %>% 
+  tri_iter_sales_raw_results <- z %>% 
     arrange(sum_sales) %>%  
     mutate(skill_rank = percent_rank(skill))
   
-  tri_iter_sales_results <<- z %>% 
+  tri_iter_sales_results <- z %>% 
     arrange(sum_sales) %>%  
     mutate(skill_rank = percent_rank(skill)) %>% 
     group_by(sum_sales) %>% 
@@ -220,14 +216,16 @@ tri_iter_sales <- function(n=20, peak = 0.5, iterations=1000, v = TRUE){
      
   if (v == TRUE) {View(tri_iter_sales_raw_results); View(tri_iter_sales_results)}
   
-  return()
+  results = list(tri_iter_sales_raw_results,tri_iter_sales_results)
+  
+  return(results)
 }
 
 
 tri_iter_sales()
 
 
-#Fig 1.11
+#Fig 1.10 & 1.11 Simulation and probability tree for oil exploration example
 
 data_for_tree <- function(pathString, prob, start_node = "Oil State" ){
   
@@ -288,6 +286,7 @@ data_for_tree <- function(pathString, prob, start_node = "Oil State" ){
   
 }
 
+# Probability tree plotting function
 
 plot_tree <- function(df, direction = "LR") {
   
@@ -329,6 +328,11 @@ prob <- c(0.6,0.3,0.3,0.7,
 oil_tree_data <- data_for_tree(pathString = pathString, prob = prob)
 plot_tree(oil_tree_data)
 
+
+
+
+
+# Fig 1.12 Alternative tree and model for oil exploration example
 given_prob <- function(df) {
   
   #######################
@@ -387,6 +391,7 @@ given_prob(oil_tree_data)
 given_tree_data <- data_for_tree(pathString = given_pathString, prob = given_prob, start_node = 'X')
 plot_tree(given_tree_data)
 
+# Fig 1.13 Binomial Probability computations for sales person example
 
 iter_sales_binom <- function(n=20, pskill=0.5,psale=2/3, v = TRUE) {
   
@@ -432,6 +437,8 @@ iter_sales_binom <- function(n=20, pskill=0.5,psale=2/3, v = TRUE) {
 }
 
 iter_sales_binom()
+
+# Fig 1.14 Compution frequencies of differend outcomes in oil exploration example
 
 oil_sim <- function(n = 1000, poil = 0.6, pA = 0.3, pB = 0.3, pnA = 0.1, pnB = 0.1) {
   
