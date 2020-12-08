@@ -6,7 +6,7 @@ library(tidyverse)
 
 # Load in Simtool specific functions from GITHUB
 source('https://raw.githubusercontent.com/mwdempse/Probability-Models-for-Economic-Decisions/main/Code/Clean/Simtool_utility_functions.R')
-source('https://raw.githubusercontent.com/mwdempse/prefixMerge-/main/prefixMerge.R')
+source('https://raw.githubusercontent.com/mwdempse/prefixMerge/main/prefixMerge.R')
 
 # Fig 4.1 Normal Distribution
 
