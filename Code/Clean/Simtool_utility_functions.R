@@ -4,6 +4,17 @@
 library(tidyverse)
 
 
+# percentile.inc function found in Excel
+pcntinc <- function(v,x){
+  sorted <- sort(v)
+  item <- x*(length(v)-1)+1
+  p <- sorted[item]
+  return(p)
+}
+
+# percentrank.inc found in Excel
+percentrank.inc <-  function(x,xo) {length(x[x<= xo])/length(x)} 
+
 # UTIL Function
 UTIL <- function(x,r,s){
   #######################
