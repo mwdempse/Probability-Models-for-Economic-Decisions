@@ -2,15 +2,26 @@ rm(list = ls())
 
 "Authors: Matthew Dempsey & Harrison McKenny"
 
+# Packages
 library(tidyverse)
+
+# Load in Simtool specific functions from GITHUB
+source('https://raw.githubusercontent.com/mwdempse/Probability-Models-for-Economic-Decisions/main/Code/Clean/Simtool_utility_functions.R')
+
+
 
 # Values from Semiconductor example of Myerson, Zambrano
 # possible number of competitors
 K <- seq(1,5,1)
 # Probability of each number competitors entering market
 prob <- c(0.1,0.25,0.3,0.25,0.1)
+# Total market worth
+totmkt <- 100
+# Fixed cost to produce
+fc <- 26
 
-# plot probabilities and CDF
+# Fig 2.1 Discrete probabilities and CDF for number of entrants K
+
 plot.prob.cdf <- function(x,prob,xlab = "Number Of Competitive Entrants (K)",
                           title = "Figure 2.1: Discrete Probability Distribution For The Number Of Entrants (K)") {
   #######################
@@ -41,7 +52,8 @@ plot.prob.cdf <- function(x,prob,xlab = "Number Of Competitive Entrants (K)",
 plot.prob.cdf(x=K, prob = prob)
 
 
-# plot CDF
+# Fig 2.2 Inverse cumulative probability curve for number of entrants K
+
 plot.cdf <- function(x,prob,ylab="Cumulative Probability",
                      title="Figure 2.2: Inverse Cumulative Probability Distribution For The Number Of Entrants (K)",
                      add = F) {
@@ -71,12 +83,7 @@ plot.cdf <- function(x,prob,ylab="Cumulative Probability",
 plot.cdf(K,prob = prob)
 
 
-
-# Calculate Profit based on number of competitors assuming total market value of 100 and fixed cost of 26
-
-totmkt <- 100
-fc <- 26
-
+# Fig 2.3 - 2.5 Simulation with a discrete probability distribution. Calculates profit matrix based on number of competitors, total market value, and fixed cost.
 
 profit_mat <- function(x,prob,totalmkt,fc) {
   #######################
@@ -96,31 +103,14 @@ profit_mat <- function(x,prob,totalmkt,fc) {
 
 (p_mat<- profit_mat(K,prob,totalmkt = totmkt,fc))
 
-
 # Find expected value and standard deviation of profit from profit matrix
 (ex_value <- crossprod(p_mat$`P(K=k)`,p_mat$Profit))
 
-
-
-STDEVPR <- function(x,prob){
-  #######################
-  # x: vector of values
-  # prob: vector of probabilities
-  # output: returns standard deviation of profit
-  #######################
-  
-  meank<- crossprod(x,prob)
-  d <- (x-c(meank))^2
-  stdevk <- (crossprod(d,prob)^0.5)
-  
-  return(stdevk)
-}
-
 (STDEVPR(p_mat$Profit,p_mat$`P(K=k)`))
 
-# test estimates to simulated data
 
-# Fig 2.6/2.7
+# Fig 2.6 Estimating expected value, standard deviation from profit matrix
+
 sim_competition <- function(profit_mat,n = 1000){
   #######################
   # profit_mat: profit matrix from profit_mat function
@@ -145,7 +135,7 @@ comp[1:2]
 comp$Simulation[1:10,]
 
 
-# plot cdf of simulated value
+# Fig 2.7 Plot of CDF of simulated values
 
 g <- ggplot(comp[[3]],aes(`Sim'd K`)) +
   stat_ecdf(geom = 'step', pad = F) +
@@ -158,7 +148,8 @@ g <- ggplot(comp[[3]],aes(`Sim'd K`)) +
 
 g
 
-# Fig 2.8
+# Fig 2.8 Properties of sample mean
+
 sample_properties <- function(x, prob, n=30, samp = F) {
   #######################
   # x: vector of values
@@ -204,19 +195,20 @@ sample_properties <- function(x, prob, n=30, samp = F) {
 
 (sample_properties(x = K,prob = prob, n = 30))
 
-# At 95% confidence we would exect the true expected value to be observed in the confidence interval of the simulated values ~5%
+# At 95% confidence we would expect the true expected value to be observed in the confidence interval of the simulated values ~5%
 test = data.frame()
 for (i in 1:1000) {
   test <- rbind.data.frame(test,sample_properties(x = K,prob = prob, n = 500))
 }
 1-sum(test$ex_val_in_95)/1000
 
-# Fig 2.9 same as Fig 2.8 only with profit instead of nuymber of competitors
+# Fig 2.9 Analysis of Superconductor case similar to Fig 2.8 only using expected profit instead of number of competitors
 
 (sample_properties(x = p_mat$Profit,prob = p_mat$`P(K=k)`, n = 500))
 
 
-# Fig 2.10
+# Fig 2.10 Cumulative risk profile from simulation data
+
 #create data
 profit_sim <- sample_properties(x = p_mat$Profit,prob = p_mat$`P(K=k)`, n = 500, samp = T)
 profits <- data.frame(profit_sim[[2]])
