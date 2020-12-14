@@ -30,7 +30,6 @@ norm_dist <- function(mu,stdv) {
           panel.background = element_blank(),
           axis.line = element_line(size = 1))
   
-  
   g2 = ggplot(n_distrubution, aes(x = q,y=d)) +
     labs(x = "Value") +
     ggtitle('Probability Density') +
@@ -134,7 +133,6 @@ l26 <- log(h24*i24) #LN(x*y)
 
 # Fig 4.4 Repeated investment strategies yielding payoffs which are Normal or Lognormal
 
-
 frac_fixed_investment <- function(wealth  = 1000, fixed = 100, frac = 0.1,
                    return = c(0.25,2), n1 = 1000, n2 = 100, prob = NULL, graph = FALSE) {
   
@@ -159,8 +157,6 @@ frac_fixed_investment <- function(wealth  = 1000, fixed = 100, frac = 0.1,
   investment_strat = round(data.frame(retn,fixed_sim,frac_sim),2)
   sim_data = data.frame(FixAmt = round(FixAmt,2),FixFrac = round(FixFrac,2),
                         ln_FixFrac = log(FixFrac))
-  
-  
   
   FixAmt_mean = mean(FixAmt)
   FixAmt_sd = sd(FixAmt)
@@ -241,7 +237,6 @@ frac_fixed_investment <- function(wealth  = 1000, fixed = 100, frac = 0.1,
 frac_fixed_investment()
 
 
-
 # Fig 4.5 Time Diversification Fallacy
 
 TDF <- function(ln_mean= 0.04, ln_sd = 0.2,
@@ -312,7 +307,7 @@ TDF <- function(ln_mean= 0.04, ln_sd = 0.2,
 tdf <- TDF()
 View(tdf)
 
-# Fig 4.6 & 4.7 Annualized and Total Returns by Investment Horizon 
+# Fig 4.6 Annualized by Investment Horizon 
 
 AROI <- tdf[['Annualized Returns']]
 
@@ -321,7 +316,6 @@ plt_AROI <- gather(AROI) %>%
   mutate(key2 = factor(key,levels = reorder(unique(key),unique(order)))) %>% 
   select(-c(blank,order,key))
   
-  
 ggplot(plt_AROI, aes(x = value, fill = key2)) + 
   geom_histogram(bins = 30) + 
   labs(title = 'Annualized Returns by Investment Horizon',
@@ -329,12 +323,13 @@ ggplot(plt_AROI, aes(x = value, fill = key2)) +
        y = 'Frequency') +
   facet_wrap(~key2,scales = 'free_x')
 
+#  4.7 Total Returns by Investment Horizon 
+
 TROI <- tdf[['Total Return']]
 plt_TROI <- gather(TROI) %>%
   separate(key,'n=', remove = F, into = c('blank','order'), convert = T) %>%
   mutate(key2 = factor(key,levels = reorder(unique(key),unique(order)))) %>% 
   select(-c(blank,order,key))
-
 
 ggplot(plt_TROI, aes(x = value, fill = key2)) + 
   geom_histogram(bins = 30) + 
@@ -344,4 +339,180 @@ ggplot(plt_TROI, aes(x = value, fill = key2)) +
   facet_wrap(~key2, scales = 'free_x')
 
 
-# Fig 8-11 left to add
+# Fig 4.8 Subjectively assessed quartiles and a Generalized Lognormal distribution
+
+genlognorm_dist <- function(quart1,quart2,quart3) {
+  
+  CumvProby = c(.001,seq(.01,.99,.01),.999)
+  Value = GENLINV(CumvProby, quart1 = quart1, quart2 = quart2, quart3 = quart3)
+  ProbyDensity = (lead(CumvProby) - lag(CumvProby))/(lead(Value) - lag(Value))
+  
+  n_distrubution = cbind.data.frame(CumvProby,Value,ProbyDensity)
+  
+  g1 = ggplot(n_distrubution, aes(x = CumvProby, y=Value)) +
+    ylab('Possible Values of Unknown') +
+    ggtitle('Inverse Cumulative Distribution') +
+    geom_line(size = 1.2) +
+    scale_x_continuous("Cumulative Probability",
+                       breaks = round(seq(min(n_distrubution$CumvProby), max(n_distrubution$CumvProby)+.01, by = 0.1),1)) + 
+   theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(size = 1))
+ #skip first and last rows due to warning messages about droping rows with NAs 
+ g2 = ggplot(n_distrubution[2:100,], aes(x = Value,y=ProbyDensity)) +
+    labs(x = "Possible Values of Unknown Quantity") +
+    ggtitle('Probability Density Function') +
+    geom_line(size = 1.2) +
+    scale_y_continuous('Probability Density',breaks = seq(0, max(n_distrubution$ProbyDensity, na.rm = T)+.01, by = 0.01)) +
+    theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(size = 1))
+  
+  g3 = ggplot(n_distrubution, aes(x = Value,y=CumvProby)) +
+    labs(x = "Possible Values of Unknown Quantity") +
+    ggtitle('Cumulative Distribution') +
+    geom_line(size = 1.2) +
+    scale_y_continuous('Cumulative Probability', breaks = seq(0, max(n_distrubution$CumvProby)+.1, by = 0.1)) +
+    theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(size = 1))
+  
+  results <- list(n_distrubution,g1,g2,g3)
+  
+  names(results) <- c('n_distrubution','Inverse Cumulative Distribution','Probability Density','Cumulative Distribution')
+  
+  return(results)
+}
+
+genlognorm_dist(quart1 = 1759, quart2 = 1764, quart3 = 1768)
+
+# Fig 4.9 Simulation analysis of the Superior Semiconductor (part C) case
+
+super_profit_sim <- function(DCquart1,DCquart2,DCquart3,
+                       MVquart1,MVquart2,MVquart3,
+                       n = 1000, P = 0.95, k = seq(1,5),
+                       prob = c(0.1,0.25,0.3,0.25,0.1),
+                       H = 20, L = -10, ce = 2) {
+  
+  
+  
+  dev_cost = GENLINV(runif(n), quart1 = DCquart1, quart2 = DCquart2, quart3 = DCquart3)
+  mrkt_val = GENLINV(runif(n), quart1 = MVquart1, quart2 = MVquart2, quart3 = MVquart3)
+  dev_succ = ifelse(runif(n) < P,1,0)
+  comp = sample(k, size = n, prob = prob, replace = T)
+  profit = dev_succ * mrkt_val / (1 + comp) - dev_cost
+  
+  sim = cbind.data.frame(dev_cost,mrkt_val,dev_succ,comp,profit)
+  sim = sim %>% mutate(profit_rank = percent_rank(profit))
+  
+  xlab_frame = data.frame(xlab = seq(0, 1,.1))
+  ylab_frame <- data.frame(ylab = seq(floor(min(sim$profit)/10)*10,ceiling(max(sim$profit)/10)*10,20))
+  
+  g1 = ggplot(sim, aes(x = profit_rank, y=profit)) +
+    labs(y = 'Possible Values of Unknown', x = 'Cumulative Probability') +
+    ggtitle('Cumulative Risk Profile') +
+    geom_line() +
+    # y axis line
+    geom_segment(x = -.0000001, xend = 0, 
+                 y = min(profit)-10, yend = max(profit)+10,
+                 size = 0.5) +
+    # x axis line
+    geom_segment(y = 0, yend = 0, 
+                 x = -.01, xend = 2,
+                 size = 0.5) +
+    # x ticks
+    geom_segment(aes(y = 0, yend = 1,
+                     x = 0, xend = 0 + .0000001)) +
+    geom_text(data=xlab_frame, aes(x=xlab, y=0, label=xlab),
+              vjust=1.5) +
+    geom_text(data=ylab_frame, aes(x=0, y=ylab, label=ylab),
+              hjust=1.5) +
+    theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank())
+
+  RiskTol = RISKTOL(H,L,ce)
+  model_results = data.frame(`E(Profit)` = mean(sim$profit),`Stdev(Profit)` = sd(sim$profit),RiskTol,CE = CE(sim$profit,RiskTol))
+  
+  results <- list(sim,model_results, g1)
+
+  names(results) <- c('Simulation','Model Analysis','Risk Profile')
+
+  return(results)
+}
+
+super_profit_sim(DCquart1 = 23, DCquart2 = 26, DCquart3 = 29,
+                 MVquart1 = 80, MVquart2 = 100, MVquart3 = 125)
+
+# Fig 4.10 Certainty Equivalent of a Normal lottery
+
+ce_nl <- function(crt = 6000, mu = 9000, std = 3000, n = 1000) {
+  
+  profit = rnorm(n = n, mean = mu, sd = std)
+  utility = UTIL(profit, r = crt)
+  sim = cbind.data.frame(profit,utility)
+  
+  ce = CE_Norm(mu = mu, std = std, crt = crt)
+  `E(Profit)` = mean(profit)
+  EU = mean(utility)
+  
+  `Stdev(Profit)` = sd(profit)
+  `Stdev(Utility)` = sd(utility)
+  
+  model_results = data.frame(ce, `E(Profit)`, EU, `Stdev(Profit)`,`Stdev(Utility)`)
+  
+  results <- list(sim,model_results)
+  
+  names(results) <- c('Simulation','Model Analysis')
+  
+  return(results)
+}
+
+ce_nl()
+
+# Fig 4.11 Comparison of Lognormal, Gamma, and Normal Distributions 
+
+lgn_comp <- function(mu, std) {
+  
+  perc = c(.001,seq(.01,.99,.01),.999)
+  
+  normal = qnorm(perc, mean = mu, sd = std)
+  lognormal = LNORMINV(perc,mean = mu, sd = std)
+  gamma = GAMINV(perc,mean = mu, sd = std)
+  
+  normal.d = dnorm(normal,mean = mu, sd = std)
+  lognormal.d = LNORMINV.D(lognormal,mean = mu, sd = std)
+  gamma.d = GAMINV.D(gamma,mean = mu, sd = std)
+  
+  sim = cbind.data.frame(perc,normal,lognormal,gamma,
+                         normal.d,lognormal.d,gamma.d)
+  
+ colors <- c("Normal" = "blue", "Lognormal" = "red", "Gamma" = "orange")
+ g1 = ggplot(sim) +
+   geom_line(aes(x = normal,y = normal.d,color = 'Normal'), size = 1) +
+   geom_line(aes(x = lognormal,y = lognormal.d,color = 'Lognormal'), size = 1) +
+   geom_line(aes(x = gamma,y = gamma.d,color = 'Gamma'), size = 1) +
+   labs(title = paste0('Probability densities, with mean = ',mu,' and stdev = ',std), color = "Legend") +
+   scale_color_manual(values = colors) +
+   theme(plot.title = element_text(hjust = 0.5),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.background = element_blank(),
+         axis.line = element_line(size = 1),
+         axis.title = element_blank())
+ 
+ results = list(sim,g1)
+ return(results)
+  
+}
+
+lgn_comp(mu = 4, std = 3)
