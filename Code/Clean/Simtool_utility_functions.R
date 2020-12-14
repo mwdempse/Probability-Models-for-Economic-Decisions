@@ -1,19 +1,8 @@
-#----Function Creations---------
+
 "Authors: Matthew Dempsey & Harrison McKenny"
 
 library(tidyverse)
 
-
-# percentile.inc function found in Excel
-pcntinc <- function(v,x){
-  sorted <- sort(v)
-  item <- x*(length(v)-1)+1
-  p <- sorted[item]
-  return(p)
-}
-
-# percentrank.inc found in Excel
-percentrank.inc <-  function(x,xo) {length(x[x<= xo])/length(x)} 
 
 # UTIL Function
 UTIL <- function(x,r,s){
@@ -210,7 +199,6 @@ NORM.S.DIST <- function(p,cp = T){
 }
 
 
-
 # 
 GENLINV <- function(prob1,quart1,quart2,quart3,lowest=NULL,highest=NULL){
   
@@ -251,4 +239,103 @@ GENLINV <- function(prob1,quart1,quart2,quart3,lowest=NULL,highest=NULL){
     }
   }
   return(GenAns)
+}
+
+# Certainty Equivalent given a normal distribution
+
+CE_Norm <- function(mu, std, crt) {
+  if (missing(std)|missing(crt)|missing(mu)) {
+    stop('Mean, Standard Deviation, or Risk Tolerance are missing')
+  }
+  ce = mu - 0.5*(std^2)/crt
+}
+
+# Risk Premium given a normal distribution
+
+RP_Norm <- function(std, crt, ce = NULL,mu = NULL) {
+  if (missing(std)|missing(crt)) {
+    stop('Standard Deviation and Risk Tolerance are required')
+  }
+  
+  if (is.null(ce)) {
+    rp = .05*(std^2)/crt
+    return(rp)
+  } 
+  
+  if (!is.null(mu)) {
+    rp = mu - ce
+    return(rp)
+  } else{
+    stop('Mean is required')
+  }
+}
+
+
+# qlnorm function which takes nonlog mean and standard deviations
+
+LNORMINV <- function(p, mean, sd) {
+  sd2 = log(1 + ((sd / mean) ^ 2))
+  lnorm = exp(qnorm(p,mean  = log(mean) - (0.5 * sd2) , sd = sd2^0.5))
+  return(lnorm)
+}
+
+# dlnorm function which takes nonlog mean and standard deviations
+
+LNORMINV.D <- function(x, mean, sd) {
+  sd2 = log(1 + ((sd / mean) ^ 2))
+  dlnorm = dlnorm(x,mean  = log(mean) - (0.5 * sd2) , sd = sd2^0.5)
+  return(dlnorm)
+}
+
+
+# qgamma which takes mean and standard deviations
+
+GAMINV <- function(p, mean, sd) {
+  gamma = qgamma(p, shape = (mean / sd) ^ 2, rate =  mean/(sd ^ 2))
+return(gamma)
+}
+
+# dgamma which takes mean and standard deviations
+
+GAMINV.D <- function(x, mean, sd) {
+  dgamma = dgamma(x, shape = (mean / sd) ^ 2, rate = mean/(sd ^ 2))
+return(dgamma)
+}
+
+# qbeta which takes mean and standard deviations
+
+BETINV <- function(p, mean, sd, lowerbound = NULL,  upperbound = NULL) {
+  u = 1
+  L = 0
+  
+  if (!is.null(lowerbound)) L = lowerbound
+  if (!is.null(upperbound)) u = upperbound
+  if (u <= L) stop('Upperbound smaller than Lowerbound')
+  
+  m = (mean - L) / (u - L)
+  s = sd / (u - L)
+  n = m * (1 - m) / (s ^ 2) - 1
+  
+  beta = L + (u - L) * qbeta(p, shape1 =  m * n, shape2 = (1 - m) * n)
+  
+  return(beta)
+}
+
+# dbeta which takes mean and standard deviations
+
+BETINV.D <- function(x, mean, sd, lowerbound = NULL,  upperbound = NULL) {
+  u = 1
+  L = 0
+  
+  if (!is.null(lowerbound)) L = lowerbound
+  if (!is.null(upperbound)) u = upperbound
+  if (u <= L) stop('Upperbound smaller than Lowerbound')
+  
+  m = (mean - L) / (u - L)
+  s = sd / (u - L)
+  n = m * (1 - m) / (s ^ 2) - 1
+  
+  beta = L + (u - L) * dbeta(x, shape1 =  m * n, shape2 = (1 - m) * n)
+  
+  return(beta)
 }
