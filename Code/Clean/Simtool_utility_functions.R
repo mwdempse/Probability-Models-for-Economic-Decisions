@@ -339,3 +339,73 @@ BETINV.D <- function(x, mean, sd, lowerbound = NULL,  upperbound = NULL) {
   
   return(beta)
 }
+
+# Creates a matrix of products
+
+PRODS = function(x){
+  n = length(x)
+  result = matrix(nrow = n,ncol = n)
+    
+  for (i in 1:n) {
+    for (k in 1:n) {
+      result[i,k] = x[i] * x[k]
+    }
+  }
+    
+  colnames(result) = x
+  rownames(result) = x
+  return(result)
+}
+
+# Covariance between two vectors given a probability of outcomes
+
+COVARPR <- function(val1, val2, prob) {
+  
+  c = NCOL(prob)
+  r = length(prob)
+  
+  if (length(val1) != r || length(val2) != r) {stop('Length of vectors not equal')}
+  if (NCOL(val1) != c | NCOL(val2) != c) stop('Number of columns in vectors not equal')
+  if (sum(prob) != 1) stop('Prob does not add up to one')
+  
+  sump = 0
+  mean1 = 0
+  mean2 = 0
+  prods = 0
+  
+  if (c == 1) {
+    for (i in 1:r) {
+      
+      p = prob[i]
+      sump = sump + p
+      mean1 = mean1 + val1[i] * p
+      mean2 = mean2 + val2[i] * p
+      prods = prods + val1[i] * val2[i] * p
+      
+    }
+  }else{
+    for (i in 1:r) {
+      for (k in 1:c) {
+        p = prob[i,k]
+        sump = sump + p
+        mean1 = mean1 + val1[i, k] * p
+        mean2 = mean2 + val2[i, k] * p
+        prods = prods + val1[i, k] * val2[i, k] * p
+      }
+    }
+  }
+  
+  
+  results = (prods - (mean1 * mean2 / sump)) / sump
+  return(results)
+  
+}
+
+# Pearson correlation between two vectors given a probability of outcomes
+
+CORRELPR <- function(val1, val2, prob){
+  
+  results = COVARPR(val1, val2, prob) / ((COVARPR(val1, val1, prob) * COVARPR(val2, val2, prob)) ^ 0.5) 
+  return(results)
+  
+}
